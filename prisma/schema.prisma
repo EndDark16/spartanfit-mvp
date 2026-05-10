@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+model GymLocation {
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  city      String?
+  users     User[]
+}
+
+model User {
+  id            String       @id @default(uuid())
+  name          String
+  email         String       @unique
+  goal          String       @default("pending") // hipertrofia, fuerza, perdida de peso, mantención, salud general
+  gymLocationId String?
+  gymLocation   GymLocation? @relation(fields: [gymLocationId], references: [id])
+  createdAt     DateTime     @default(now())
+  
+  metrics       Metric[]
+  workouts      WorkoutLog[]
+  messages      ChatMessage[]
+}
+
+model Metric {
+  id            String    @id @default(uuid())
+  userId        String
+  weight        Float     // Peso corporal en kg
+  height        Float     // Estatura en cm
+  recordedAt    DateTime  @default(now())
+  user          User      @relation(fields: [userId], references: [id])
+}
+
+model WorkoutLog {
+  id            String    @id @default(uuid())
+  userId        String
+  exercise      String    // ej: "Sentadilla libre", "Press de banca"
+  weightLoad    Float     // Carga levantada
+  reps          Int
+  recordedAt    DateTime  @default(now())
+  user          User      @relation(fields: [userId], references: [id])
+}
+
+model Content {
+  id                String   @id @default(uuid())
+  title             String
+  contentUrl        String   // Link al video o artículo
+  isScienceBacked   Boolean  @default(true) // Diferencia Evidencia Científica de Comunidad
+  difficultyLevel   String   // "Principiante", "Intermedio"
+}
+
+model ChatMessage {
+  id            String    @id @default(uuid())
+  userId        String
+  role          String    // "user" o "coach"
+  content       String
+  createdAt     DateTime  @default(now())
+  user          User      @relation(fields: [userId], references: [id])
+}
