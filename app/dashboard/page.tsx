@@ -2,6 +2,10 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { UserService } from "@/lib/services/user.service";
 import Link from "next/link";
+import { getActiveExercises } from "@/actions/exercise.actions";
+import { getUserWorkoutProgress } from "@/actions/workout.actions";
+import { AddWorkoutModal } from "./components/add-workout-modal";
+import { WorkoutProgressCharts } from "./components/workout-progress-charts";
 
 export const metadata = {
   title: "SpartanFit | Dashboard",
@@ -25,6 +29,9 @@ export default async function DashboardPage() {
   if (dbUser.goal === "pending" || !dbUser.roleId) {
     redirect("/profile");
   }
+
+  const exercises = await getActiveExercises();
+  const progressData = await getUserWorkoutProgress(dbUser.id);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white p-8">
@@ -59,6 +66,12 @@ export default async function DashboardPage() {
                   className="text-zinc-400 hover:text-white transition-colors text-sm font-medium"
                 >
                   Ciudades
+                </Link>
+                <Link
+                  href="/admin/exercises"
+                  className="text-zinc-400 hover:text-white transition-colors text-sm font-medium"
+                >
+                  Ejercicios
                 </Link>
               </>
             )}
@@ -100,6 +113,14 @@ export default async function DashboardPage() {
             <h3 className="text-zinc-400 text-sm font-medium mb-1">Coach</h3>
             <p className="text-xl font-bold text-[#c22524]">Spartanfit IA</p>
           </div>
+        </div>
+
+        <div className="mt-12">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <h2 className="text-2xl font-bold">Progreso de Entrenamiento</h2>
+            <AddWorkoutModal userId={dbUser.id} exercises={exercises} />
+          </div>
+          <WorkoutProgressCharts chartsData={progressData} />
         </div>
       </div>
     </div>
