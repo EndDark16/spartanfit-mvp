@@ -84,9 +84,16 @@ export default async function DashboardPage() {
             <p className="text-xl font-bold capitalize">{dbUser.goal}</p>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-            <h3 className="text-zinc-400 text-sm font-medium mb-1">Sede</h3>
-            <p className="text-xl font-bold">
-              {dbUser.gymLocation?.name || "No especificada"}
+            <h3 className="text-zinc-400 text-sm font-medium mb-1">
+              Sede{dbUser.userGyms && dbUser.userGyms.length > 1 ? "s" : ""}
+            </h3>
+            <p className="text-xl font-bold truncate">
+              {dbUser.userGyms && dbUser.userGyms.length > 0
+                ? dbUser.userGyms
+                    .map((ug: any) => ug.gymLocation?.name)
+                    .filter(Boolean)
+                    .join(", ")
+                : "No especificada"}
             </p>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">

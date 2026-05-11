@@ -21,7 +21,7 @@ export class UserService {
         role: true,
       },
     });
-    return user as any as UserProfileResponse;
+    return user as UserProfileResponse;
   }
 
   /**
