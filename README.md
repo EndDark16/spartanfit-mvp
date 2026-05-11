@@ -13,7 +13,7 @@ El proyecto está construido con un entorno full-stack JavaScript moderno:
 *   **Styling:** Tailwind CSS, utilizando una estética premium, enfocada primero en el modo oscuro (dark-mode-first) con efectos de glassmorphism.
 *   **Database & ORM:** PostgreSQL gestionado a través de **Prisma ORM**.
 *   **BaaS / Authentication:** **Supabase** maneja tanto el alojamiento de PostgreSQL (vía connection pooling) como la Autenticación de Usuarios.
-*   **Architecture Pattern:** Sigue un enfoque estructurado y en capas. Los componentes de UI viven en `src/components/`, la lógica de enrutamiento del lado del servidor en `src/app/`, los Next.js Server Actions en `src/actions/` (actuando como controladores), y la lógica pesada de base de datos/negocio se abstrae en `src/lib/services/`.
+*   **Architecture Pattern:** Sigue un enfoque estructurado y en capas. Los componentes de UI viven en `components/`, la lógica de enrutamiento del lado del servidor en `app/`, los Next.js Server Actions en `actions/` (actuando como controladores), y la lógica pesada de base de datos/negocio se abstrae en `lib/services/`.
 
 ### ✨ Core Features & Modules
 1. **User Identity & Profiles (`User`, `Role`):** Autenticación vía Supabase. Rastreo de datos vitales (edad, peso, altura, índice de actividad) y metas. Soporte RBAC (roles como `ADMIN`).
