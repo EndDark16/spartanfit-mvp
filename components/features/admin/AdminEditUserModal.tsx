@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { updateUserAsAdmin } from "@/actions/admin.actions";
+import { GymMultiSelect } from "../users/GymMultiSelect";
 
 interface Props {
   user: any;
@@ -18,7 +19,7 @@ export function AdminEditUserModal({ user, roles, locations, onClose, onSuccess 
     height: user.height || "",
     activityIndex: user.activityIndex || "",
     roleId: user.roleId || "",
-    gymLocationId: user.gymLocationId || "",
+    gymIds: user.userGyms?.map((ug: any) => ug.gymLocation.id) || [],
     status: user.status || "ACTIVE",
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -33,7 +34,7 @@ export function AdminEditUserModal({ user, roles, locations, onClose, onSuccess 
         height: formData.height ? Number(formData.height) : null,
         activityIndex: formData.activityIndex ? Number(formData.activityIndex) : null,
         roleId: formData.roleId || null,
-        gymLocationId: formData.gymLocationId || null,
+        gymIds: formData.gymIds,
         status: formData.status as any,
       });
       onSuccess();
@@ -139,6 +140,17 @@ export function AdminEditUserModal({ user, roles, locations, onClose, onSuccess 
                   <option value="SUSPENDED" className="bg-[#111] text-rose-400">Suspendido (Acceso Bloqueado)</option>
                 </select>
               </div>
+            </div>
+
+            <hr className="border-white/5" />
+
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-2">Gimnasios a los que asiste</label>
+              <GymMultiSelect 
+                gyms={locations} 
+                initialSelectedIds={formData.gymIds} 
+                onChange={(ids) => setFormData({...formData, gymIds: ids})} 
+              />
             </div>
 
           </form>

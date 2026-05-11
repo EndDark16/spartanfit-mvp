@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { updateProfileAction, suspendAccountAction } from "@/actions/user.actions";
 import { UserProfileResponse } from "@/lib/types/user.types";
+import { GymMultiSelect } from "./../users/GymMultiSelect";
 
 interface Props {
   user: UserProfileResponse;
@@ -25,11 +26,9 @@ export function ProfileForm({ user, gyms, roles }: Props) {
       height: formData.get("height") ? parseFloat(formData.get("height") as string) : null,
       activityIndex: formData.get("activityIndex") ? parseInt(formData.get("activityIndex") as string) : null,
       goal: formData.get("goal") as string,
-      gymLocationId: formData.get("gymLocationId") as string || null,
+      gymIds: formData.getAll("gymIds") as string[],
       roleId: formData.get("roleId") as string || undefined,
     };
-
-    if (data.gymLocationId === "none") data.gymLocationId = null;
 
     startTransition(async () => {
       try {
@@ -101,13 +100,12 @@ export function ProfileForm({ user, gyms, roles }: Props) {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-zinc-300">Gimnasio</label>
-          <select name="gymLocationId" defaultValue={user.gymLocationId || "none"} className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-4 py-3 text-white focus:outline-none focus:border-[#c22524] focus:ring-1 focus:ring-[#c22524]">
-            <option value="none">No entreno en un gimnasio de la red / Omitir</option>
-            {gyms.map(gym => (
-              <option key={gym.id} value={gym.id}>{gym.name}</option>
-            ))}
-          </select>
+          <label className="block text-sm font-medium text-zinc-300">Gimnasios a los que asistes</label>
+          <GymMultiSelect 
+            gyms={gyms} 
+            initialSelectedIds={user.userGyms?.map(ug => ug.gymLocation.id) || []} 
+            onChange={() => {}} 
+          />
         </div>
 
         <div className="space-y-2">

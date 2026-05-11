@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import { UserService } from "@/lib/services/user.service";
 import Link from "next/link";
 
+export const metadata = {
+  title: "SpartanFit | Dashboard",
+};
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const {
@@ -37,12 +41,26 @@ export default async function DashboardPage() {
               Mi Perfil
             </Link>
             {dbUser.role?.name == "ADMIN" && (
-              <Link
-                href="/admin/users"
-                className="bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded text-sm font-medium transition-colors"
-              >
-                Usuarios
-              </Link>
+              <>
+                <Link
+                  href="/admin/users"
+                  className="text-zinc-400 hover:text-white transition-colors text-sm font-medium"
+                >
+                  Usuarios
+                </Link>
+                <Link
+                  href="/admin/gyms"
+                  className="text-zinc-400 hover:text-white transition-colors text-sm font-medium"
+                >
+                  Gimnasios
+                </Link>
+                <Link
+                  href="/admin/cities"
+                  className="text-zinc-400 hover:text-white transition-colors text-sm font-medium"
+                >
+                  Ciudades
+                </Link>
+              </>
             )}
             <form
               action={async () => {
@@ -66,9 +84,16 @@ export default async function DashboardPage() {
             <p className="text-xl font-bold capitalize">{dbUser.goal}</p>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-            <h3 className="text-zinc-400 text-sm font-medium mb-1">Sede</h3>
-            <p className="text-xl font-bold">
-              {dbUser.gymLocation?.name || "No especificada"}
+            <h3 className="text-zinc-400 text-sm font-medium mb-1">
+              Sede{dbUser.userGyms && dbUser.userGyms.length > 1 ? "s" : ""}
+            </h3>
+            <p className="text-xl font-bold truncate">
+              {dbUser.userGyms && dbUser.userGyms.length > 0
+                ? dbUser.userGyms
+                    .map((ug: any) => ug.gymLocation?.name)
+                    .filter(Boolean)
+                    .join(", ")
+                : "No especificada"}
             </p>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">

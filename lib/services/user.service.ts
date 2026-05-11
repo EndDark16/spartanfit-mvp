@@ -17,7 +17,7 @@ export class UserService {
         goal: "pending",
       },
       include: {
-        gymLocation: true,
+        userGyms: { include: { gymLocation: true } },
         role: true,
       },
     });
@@ -31,28 +31,38 @@ export class UserService {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        gymLocation: true,
+        userGyms: { include: { gymLocation: true } },
         role: true,
       },
     });
     
-    return user as UserProfileResponse | null;
+    return user as any as UserProfileResponse | null;
   }
 
   /**
    * Updates the user profile with the provided data.
    */
   static async updateUserProfile(userId: string, data: UpdateUserProfileDTO): Promise<UserProfileResponse> {
+    const { gymIds, ...restData } = data;
+
     const user = await prisma.user.update({
       where: { id: userId },
-      data,
+      data: {
+        ...restData,
+        ...(gymIds && {
+          userGyms: {
+            deleteMany: {},
+            create: gymIds.map(gymId => ({ gymLocationId: gymId }))
+          }
+        })
+      },
       include: {
-        gymLocation: true,
+        userGyms: { include: { gymLocation: true } },
         role: true,
       },
     });
 
-    return user as UserProfileResponse;
+    return user as any as UserProfileResponse;
   }
 
   /**

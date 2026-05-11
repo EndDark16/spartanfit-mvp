@@ -5,7 +5,7 @@ export interface UpdateUserProfileDTO {
   height?: number | null;
   activityIndex?: number | null;
   goal?: string;
-  gymLocationId?: string | null;
+  gymIds?: string[];
   roleId?: string | null;
 }
 
@@ -19,8 +19,7 @@ export interface UserProfileResponse {
   activityIndex: number | null;
   goal: string;
   status: "ACTIVE" | "SUSPENDED";
-  gymLocationId: string | null;
   roleId: string | null;
   role: { name: string } | null;
-  gymLocation: { id: string; name: string } | null;
+  userGyms: { gymLocation: { id: string; name: string } }[];
 }

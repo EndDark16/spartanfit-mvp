@@ -1,36 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Proyecto SpartanFit MVP
 
-## Getting Started
+Este archivo define el contexto global del proyecto.
 
-First, run the development server:
+## Contexto del Proyecto
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 🏋️‍♂️ Project Overview
+**SpartanFit MVP** es una plataforma web moderna de fitness y coaching. Está diseñada para ayudar a los usuarios a rastrear su progreso físico, registrar sus entrenamientos, consumir contenido de fitness e interactuar con entrenadores, mientras proporciona a los administradores herramientas robustas para gestionar usuarios y sucursales físicas de gimnasios.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 🛠️ Tech Stack & Architecture
+El proyecto está construido con un entorno full-stack JavaScript moderno:
+*   **Framework:** Next.js (App Router) utilizando React Server Components y Server Actions.
+*   **Styling:** Tailwind CSS, utilizando una estética premium, enfocada primero en el modo oscuro (dark-mode-first) con efectos de glassmorphism.
+*   **Database & ORM:** PostgreSQL gestionado a través de **Prisma ORM**.
+*   **BaaS / Authentication:** **Supabase** maneja tanto el alojamiento de PostgreSQL (vía connection pooling) como la Autenticación de Usuarios.
+*   **Architecture Pattern:** Sigue un enfoque estructurado y en capas. Los componentes de UI viven en `components/`, la lógica de enrutamiento del lado del servidor en `app/`, los Next.js Server Actions en `actions/` (actuando como controladores), y la lógica pesada de base de datos/negocio se abstrae en `lib/services/`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### ✨ Core Features & Modules
+1. **User Identity & Profiles (`User`, `Role`):** Autenticación vía Supabase. Rastreo de datos vitales (edad, peso, altura, índice de actividad) y metas. Soporte RBAC (roles como `ADMIN`).
+2. **Gym Network Management (`City`, `GymLocation`, `UserGym`):** Gestión de red de sucursales. Administradores tienen un dashboard para el CRUD de ciudades y gimnasios. Usuarios pueden multiseleccionar sus gimnasios.
+3. **Fitness Tracking (`Metric`, `WorkoutLog`):** Registro de métricas corporales y de entrenamientos (peso, repeticiones y ejercicios por sesión).
+4. **Educational Content (`Content`):** Contenido categorizado por dificultad con un flag único (`isScienceBacked`).
+5. **Coaching & Communication (`ChatMessage`):** Sistema de chat para mensajes entre roles (ej. usuario y entrenador).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 🤖 AI-Driven Workflow
+Este repositorio utiliza un enfoque de **Spec-Driven Development** guiado por este archivo `AGENTS.md`. Los requerimientos se transforman en especificaciones técnicas (`specs/`) y el código se genera sistemáticamente (Base de datos -> Servicios -> Frontend) basándose en contratos aprobados.
