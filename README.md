@@ -23,4 +23,4 @@ El proyecto está construido con un entorno full-stack JavaScript moderno:
 5. **Coaching & Communication (`ChatMessage`):** Sistema de chat para mensajes entre roles (ej. usuario y entrenador).
 
 ### 🤖 AI-Driven Workflow
-Este repositorio utiliza un enfoque de **Spec-Driven Development** guiado por este archivo `agents.md`. Los requerimientos se transforman en especificaciones técnicas (`specs/`) y el código se genera sistemáticamente (Base de datos -> Servicios -> Frontend) basándose en contratos aprobados.
+Este repositorio utiliza un enfoque de **Spec-Driven Development** guiado por este archivo `AGENTS.md`. Los requerimientos se transforman en especificaciones técnicas (`specs/`) y el código se genera sistemáticamente (Base de datos -> Servicios -> Frontend) basándose en contratos aprobados.
