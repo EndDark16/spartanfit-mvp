@@ -1,6 +1,10 @@
 import { GoogleLoginButton } from "@/components/GoogleLoginButton";
 import Image from "next/image";
 
+export const metadata = {
+  title: 'SpartanFit | Home',
+}
+
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-zinc-950 font-sans text-white selection:bg-[#c22524] selection:text-white">

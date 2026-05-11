@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
 }
 
 enum UserStatus {
@@ -19,12 +19,38 @@ model Role {
   users     User[]
 }
 
+model City {
+  id        String        @id @default(uuid())
+  name      String        @unique
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  gyms      GymLocation[]
+}
+
 model GymLocation {
-  id      String  @id @default(uuid())
-  name    String
-  address String?
-  city    String?
-  users   User[]
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  isActive  Boolean  @default(true)
+  cityId    String
+  city      City     @relation(fields: [cityId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userGyms UserGym[]
+}
+
+model UserGym {
+  id            String   @id @default(uuid())
+  userId        String
+  gymLocationId String
+  assignedAt    DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gymLocation GymLocation @relation(fields: [gymLocationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gymLocationId])
 }
 
 model User {
@@ -42,9 +68,8 @@ model User {
   roleId String?
   role   Role?      @relation(fields: [roleId], references: [id])
 
-  gymLocationId String?
-  gymLocation   GymLocation? @relation(fields: [gymLocationId], references: [id])
-  createdAt     DateTime     @default(now())
+  userGyms  UserGym[]
+  createdAt DateTime  @default(now())
 
   metrics  Metric[]
   workouts WorkoutLog[]

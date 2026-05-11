@@ -73,6 +73,7 @@ export async function getFilteredUsers(filters: AdminUserFilters, page: number =
       where: whereClause,
       include: {
         role: true,
+        userGyms: { include: { gymLocation: true } },
       },
       skip,
       take: pageSize,
@@ -89,14 +90,22 @@ export async function updateUserAsAdmin(userId: string, data: Partial<UpdateUser
   await ensureAdmin();
 
   // Strip protected fields explicitly
-  const safeData = { ...data };
+  const { gymIds, ...safeData } = data;
   delete safeData.name;
   // @ts-ignore - explicitly removing it just in case
   delete safeData.email;
 
   await prisma.user.update({
     where: { id: userId },
-    data: safeData,
+    data: {
+      ...safeData,
+      ...(gymIds && {
+        userGyms: {
+          deleteMany: {},
+          create: gymIds.map(gymId => ({ gymLocationId: gymId }))
+        }
+      })
+    },
   });
 
   revalidatePath("/admin/users");
