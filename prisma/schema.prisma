@@ -85,14 +85,26 @@ model Metric {
   user       User     @relation(fields: [userId], references: [id])
 }
 
+model Exercise {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workoutLogs WorkoutLog[]
+}
+
 model WorkoutLog {
   id         String   @id @default(uuid())
   userId     String
-  exercise   String // ej: "Sentadilla libre", "Press de banca"
+  exerciseId String
+  sets       Int
   weightLoad Float // Carga levantada
   reps       Int
   recordedAt DateTime @default(now())
-  user       User     @relation(fields: [userId], references: [id])
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
 }
 
 model Content {
