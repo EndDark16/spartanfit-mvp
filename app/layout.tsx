@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://spartanfit.app"),
   title: {
     default: "SpartanFit | Fitness y coaching con IA",
     template: "%s",

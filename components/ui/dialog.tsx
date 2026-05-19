@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils/cn";
 import { X } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 interface DialogProps {
@@ -26,12 +26,6 @@ export function Dialog({
   closeOnOverlay = true,
   className,
 }: DialogProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   useEffect(() => {
     if (!open) return;
 
@@ -51,7 +45,7 @@ export function Dialog({
     };
   }, [open, onOpenChange]);
 
-  if (!mounted || !open) return null;
+  if (typeof window === "undefined" || !open) return null;
 
   return createPortal(
     <div

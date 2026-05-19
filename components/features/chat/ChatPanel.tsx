@@ -35,6 +35,7 @@ export function ChatPanel({ initialMessages }: ChatPanelProps) {
   const [retryMessage, setRetryMessage] = useState<string>("");
   const { pushToast } = useToast();
   const endRef = useRef<HTMLDivElement | null>(null);
+  const optimisticCounter = useRef(0);
 
   const hasMessages = useMemo(() => messages.length > 0, [messages]);
 
@@ -48,7 +49,7 @@ export function ChatPanel({ initialMessages }: ChatPanelProps) {
     setRetryMessage(message);
 
     const optimisticUserMessage = {
-      id: `temp-${Date.now()}`,
+      id: `temp-${optimisticCounter.current++}`,
       role: "user" as const,
       content: message,
       createdAt: new Date(),

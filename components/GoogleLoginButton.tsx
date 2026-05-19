@@ -7,11 +7,29 @@ import { useToast } from "@/components/ui/toast";
 
 export function GoogleLoginButton() {
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
   const { pushToast } = useToast();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+
+  const hasValidSupabaseConfig =
+    supabaseUrl.startsWith("https://") &&
+    !supabaseUrl.includes("example.supabase.co") &&
+    supabaseAnonKey.length > 20 &&
+    supabaseAnonKey !== "anon-key";
 
   const handleLogin = async () => {
+    if (!hasValidSupabaseConfig) {
+      pushToast({
+        variant: "error",
+        title: "Configura Supabase antes de iniciar sesion",
+        description:
+          "Define NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY con valores reales en .env.",
+      });
+      return;
+    }
+
     setLoading(true);
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -26,7 +44,10 @@ export function GoogleLoginButton() {
         title: "No se pudo iniciar sesión",
         description: error.message,
       });
+      return;
     }
+
+    setLoading(false);
   };
 
   return (
