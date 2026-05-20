@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
@@ -22,6 +22,11 @@ export async function getChatMessagesAction() {
   return ChatService.getMessagesByUser(userId);
 }
 
+export async function getChatProviderStatusAction() {
+  await getAuthenticatedUserId();
+  return ChatService.getProviderStatus();
+}
+
 export async function sendChatMessageAction(rawMessage: string) {
   const userId = await getAuthenticatedUserId();
   const userMessage = rawMessage.trim();
@@ -42,7 +47,11 @@ export async function sendChatMessageAction(rawMessage: string) {
       userMessage,
       recentMessages: existingMessages.slice(-12),
     });
-    const createdCoachMessage = await ChatService.createMessage(userId, "coach", coachReply);
+    const createdCoachMessage = await ChatService.createMessage(
+      userId,
+      "coach",
+      coachReply.content,
+    );
 
     revalidatePath("/chat");
 
@@ -51,6 +60,11 @@ export async function sendChatMessageAction(rawMessage: string) {
       data: {
         userMessage: createdUserMessage,
         coachMessage: createdCoachMessage,
+      },
+      meta: {
+        provider: coachReply.source,
+        model: coachReply.model,
+        reason: coachReply.reason,
       },
     };
   } catch (error) {

@@ -1,12 +1,10 @@
-import { Skeleton } from "@/components/ui/skeleton";
+﻿import { PageLoading } from "@/components/ui/page-loading";
 
 export default function AdminLoading() {
   return (
-    <div className="min-h-screen bg-zinc-950 p-4">
-      <div className="mx-auto max-w-7xl space-y-4">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-[70vh] w-full" />
-      </div>
-    </div>
+    <PageLoading
+      title="Cargando panel admin"
+      subtitle="Sincronizando usuarios, ciudades y gimnasios."
+    />
   );
 }

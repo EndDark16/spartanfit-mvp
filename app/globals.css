@@ -87,6 +87,24 @@ textarea {
   box-shadow: var(--shadow-soft);
 }
 
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes loading-slide {
+  0% {
+    transform: translateX(-120%);
+  }
+  55% {
+    transform: translateX(210%);
+  }
+  100% {
+    transform: translateX(210%);
+  }
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;

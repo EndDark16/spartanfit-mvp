@@ -16,7 +16,10 @@ interface GeminiResponse {
   candidates?: GeminiCandidate[];
 }
 
-const GEMINI_MODEL = "gemini-1.5-flash";
+interface GeminiReplyResult {
+  text: string | null;
+  model: string;
+}
 
 function buildPrompt(input: { userMessage: string; recentMessages: ChatMessageRecord[] }) {
   const contextMessages = input.recentMessages
@@ -38,44 +41,81 @@ function buildPrompt(input: { userMessage: string; recentMessages: ChatMessageRe
 }
 
 export class GeminiService {
+  static getConfiguredModelCandidates() {
+    const envModel = process.env.GEMINI_MODEL?.trim();
+    const candidates = [
+      envModel,
+      "gemini-2.0-flash",
+      "gemini-1.5-flash",
+    ].filter((model): model is string => Boolean(model));
+
+    return [...new Set(candidates)];
+  }
+
   static isConfigured() {
-    return Boolean(process.env.GEMINI_API_KEY);
+    const key = process.env.GEMINI_API_KEY?.trim();
+    return Boolean(key && key.length > 20);
+  }
+
+  static getStatus() {
+    return {
+      configured: GeminiService.isConfigured(),
+      modelCandidates: GeminiService.getConfiguredModelCandidates(),
+    };
   }
 
   static async generateReply(input: {
     userMessage: string;
     recentMessages: ChatMessageRecord[];
-  }): Promise<string | null> {
+  }): Promise<GeminiReplyResult> {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return null;
+    if (!apiKey) return { text: null, model: "none" };
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: buildPrompt(input) }],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.6,
-            topP: 0.9,
-            maxOutputTokens: 400,
+    const models = GeminiService.getConfiguredModelCandidates();
+    let lastError: Error | null = null;
+
+    for (const model of models) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [{ text: buildPrompt(input) }],
+                },
+              ],
+              generationConfig: {
+                temperature: 0.6,
+                topP: 0.9,
+                maxOutputTokens: 400,
+              },
+            }),
+            cache: "no-store",
           },
-        }),
-        cache: "no-store",
-      },
-    );
+        );
 
-    if (!response.ok) {
-      throw new Error(`Gemini request failed with status ${response.status}`);
+        if (!response.ok) {
+          const raw = await response.text();
+          throw new Error(`Gemini ${model} failed ${response.status}: ${raw.slice(0, 240)}`);
+        }
+
+        const data = (await response.json()) as GeminiResponse;
+        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (reply) {
+          return { text: reply, model };
+        }
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error("Unknown Gemini error");
+      }
     }
 
-    const data = (await response.json()) as GeminiResponse;
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    return reply || null;
+    if (lastError) {
+      throw lastError;
+    }
+
+    return { text: null, model: models[0] || "unknown" };
   }
 }

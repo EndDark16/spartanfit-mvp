@@ -8,6 +8,13 @@ export interface ChatMessageRecord {
   createdAt: Date;
 }
 
+export interface CoachReplyResult {
+  source: "gemini" | "fallback";
+  content: string;
+  model?: string;
+  reason?: string;
+}
+
 function getFallbackReply(input: {
   userMessage: string;
   recentMessages: ChatMessageRecord[];
@@ -37,6 +44,14 @@ function getFallbackReply(input: {
   return "Estoy listo para ayudarte con hipertrofia, fuerza y progresión. Cuéntame tu objetivo principal de esta semana y tu disponibilidad de días.";
 }
 
+function mapGeminiErrorToReason(error: unknown): string {
+  const message = error instanceof Error ? error.message : "unknown";
+  if (message.includes(" 429")) return "gemini_rate_limited";
+  if (message.includes(" 401") || message.includes(" 403")) return "gemini_auth_error";
+  if (message.includes(" 404")) return "gemini_model_not_found";
+  return "gemini_error";
+}
+
 export class ChatService {
   static async getMessagesByUser(userId: string): Promise<ChatMessageRecord[]> {
     const messages = await prisma.chatMessage.findMany({
@@ -60,16 +75,40 @@ export class ChatService {
   static async generateCoachReply(input: {
     userMessage: string;
     recentMessages: ChatMessageRecord[];
-  }) {
+  }): Promise<CoachReplyResult> {
     if (GeminiService.isConfigured()) {
       try {
         const aiReply = await GeminiService.generateReply(input);
-        if (aiReply) return aiReply;
+        if (aiReply.text) {
+          return {
+            source: "gemini",
+            content: aiReply.text,
+            model: aiReply.model,
+          };
+        }
       } catch (error) {
         console.error("Gemini reply failed, using fallback reply:", error);
+        return {
+          source: "fallback",
+          content: getFallbackReply(input),
+          reason: mapGeminiErrorToReason(error),
+        };
       }
     }
 
-    return getFallbackReply(input);
+    return {
+      source: "fallback",
+      content: getFallbackReply(input),
+      reason: GeminiService.isConfigured() ? "empty_response" : "missing_api_key",
+    };
+  }
+
+  static getProviderStatus() {
+    const status = GeminiService.getStatus();
+    return {
+      configured: status.configured,
+      preferredModel: status.modelCandidates[0] || "gemini-2.0-flash",
+      candidates: status.modelCandidates,
+    };
   }
 }

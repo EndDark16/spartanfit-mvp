@@ -1,4 +1,4 @@
-﻿import { getChatMessagesAction } from "@/actions/chat.actions";
+﻿import { getChatMessagesAction, getChatProviderStatusAction } from "@/actions/chat.actions";
 import { ChatPanel } from "@/components/features/chat/ChatPanel";
 import { AppShell } from "@/components/layout/AppShell";
 import { UserService } from "@/lib/services/user.service";
@@ -19,9 +19,10 @@ export default async function ChatPage() {
     redirect("/");
   }
 
-  const [dbUser, messages] = await Promise.all([
+  const [dbUser, messages, providerStatus] = await Promise.all([
     UserService.syncUser(user),
     getChatMessagesAction(),
+    getChatProviderStatusAction(),
   ]);
 
   if (dbUser.goal === "pending") {
@@ -40,6 +41,7 @@ export default async function ChatPage() {
     >
       <ChatPanel
         userName={safeUserName}
+        providerStatus={providerStatus}
         initialMessages={messages.map((message) => ({
           ...message,
           role: message.role as "user" | "coach",
