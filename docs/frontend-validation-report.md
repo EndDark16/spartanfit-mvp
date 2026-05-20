@@ -95,6 +95,10 @@
   - Onboarding ya no depende de `roleId`; solo de completar objetivo.
 - Chat UX:
   - El avatar del usuario ahora usa su nombre real para iniciales (no inicial fija `T`).
+- Integración IA:
+  - `ChatService` ahora usa `GEMINI_API_KEY` cuando está disponible.
+  - Se agregó `lib/services/gemini.service.ts` para aislar la llamada a Gemini.
+  - Si Gemini falla o no está configurado, el chat mantiene fallback local sin romper build/runtime.
 - Idioma y visual:
   - Se restauraron acentos/`ñ` en textos críticos visibles.
   - Inputs numéricos sin spinners del navegador para consistencia visual.

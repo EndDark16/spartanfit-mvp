@@ -33,3 +33,8 @@ Este repositorio utiliza un enfoque de **Spec-Driven Development** guiado por es
    - `npm install`
    - `npx prisma generate`
    - `npm run dev`
+
+5. Para respuestas IA reales en `/chat`, define también:
+   - `GEMINI_API_KEY`
+
+Si `GEMINI_API_KEY` no está disponible, SpartanFit usa un fallback local de respuestas para no romper la experiencia.
