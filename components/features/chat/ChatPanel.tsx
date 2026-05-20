@@ -19,16 +19,17 @@ interface ChatPanelProps {
     content: string;
     createdAt: Date;
   }>;
+  userName?: string;
 }
 
 const suggestionPrompts = [
-  "Como mejoro mi hipertrofia?",
-  "Que rutina puedo hacer hoy?",
-  "Como progreso en fuerza?",
-  "Analiza mi ultimo entrenamiento",
+  "¿Cómo mejoro mi hipertrofia?",
+  "¿Qué rutina puedo hacer hoy?",
+  "¿Cómo progreso en fuerza?",
+  "Analiza mi último entrenamiento",
 ];
 
-export function ChatPanel({ initialMessages }: ChatPanelProps) {
+export function ChatPanel({ initialMessages, userName }: ChatPanelProps) {
   const [messages, setMessages] = useState(initialMessages);
   const [isSending, setIsSending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -97,7 +98,7 @@ export function ChatPanel({ initialMessages }: ChatPanelProps) {
       <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
         {!hasMessages && (
           <EmptyState
-            title="Empieza tu conversacion"
+            title="Empieza tu conversación"
             description="Hazle una pregunta al coach para planificar tu entrenamiento."
             icon={<MessageCircle className="h-6 w-6" />}
             action={
@@ -124,6 +125,7 @@ export function ChatPanel({ initialMessages }: ChatPanelProps) {
             role={message.role}
             content={message.content}
             createdAt={new Date(message.createdAt)}
+            userName={userName}
           />
         ))}
 

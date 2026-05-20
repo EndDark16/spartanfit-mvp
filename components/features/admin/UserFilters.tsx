@@ -19,7 +19,7 @@ export function UserFilters({ filters, setFilters, roles }: Props) {
 
   return (
     <div className="space-y-6 rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
-      <h2 className="text-xl font-bold text-zinc-100 tracking-tight">Filtros de busqueda</h2>
+      <h2 className="text-xl font-bold text-zinc-100 tracking-tight">Filtros de búsqueda</h2>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <div>
@@ -145,3 +145,4 @@ export function UserFilters({ filters, setFilters, roles }: Props) {
     </div>
   );
 }
+

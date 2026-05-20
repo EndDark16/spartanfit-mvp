@@ -15,7 +15,6 @@ import { ErrorState } from "@/components/ui/error-state";
 interface Props {
   user: UserProfileResponse;
   gyms: { id: string; name: string }[];
-  roles: { id: string; name: string }[];
 }
 
 interface FormState {
@@ -25,12 +24,11 @@ interface FormState {
   height: string;
   activityIndex: string;
   goal: string;
-  roleId: string;
 }
 
 const defaultGoal = "pending";
 
-export function ProfileForm({ user, gyms, roles }: Props) {
+export function ProfileForm({ user, gyms }: Props) {
   const [isPending, startTransition] = useTransition();
   const [isSuspendOpen, setIsSuspendOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,10 +43,19 @@ export function ProfileForm({ user, gyms, roles }: Props) {
     height: user.height ? String(user.height) : "",
     activityIndex: user.activityIndex ? String(user.activityIndex) : "",
     goal: user.goal || defaultGoal,
-    roleId: user.roleId || "",
   });
 
   const { pushToast } = useToast();
+
+  const updateField = (field: keyof FormState, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const parsedPayload = useMemo(() => {
     const toNumberOrNull = (value: string) => {
@@ -64,9 +71,8 @@ export function ProfileForm({ user, gyms, roles }: Props) {
       activityIndex: toNumberOrNull(form.activityIndex),
       goal: form.goal,
       gymIds: selectedGymIds,
-      roleId: user.roleId ? undefined : form.roleId || undefined,
     };
-  }, [form, selectedGymIds, user.roleId]);
+  }, [form, selectedGymIds]);
 
   const validateForm = () => {
     const nextErrors: Record<string, string> = {};
@@ -96,10 +102,6 @@ export function ProfileForm({ user, gyms, roles }: Props) {
 
     if (!parsedPayload.goal || parsedPayload.goal === defaultGoal) {
       nextErrors.goal = "Selecciona un objetivo principal.";
-    }
-
-    if (!user.roleId && !parsedPayload.roleId) {
-      nextErrors.roleId = "Selecciona un rol para continuar.";
     }
 
     setFieldErrors(nextErrors);
@@ -160,7 +162,7 @@ export function ProfileForm({ user, gyms, roles }: Props) {
     <>
       <Card className="mx-auto w-full max-w-3xl">
         <CardHeader>
-          <CardTitle>Mi Perfil</CardTitle>
+          <CardTitle>Mi perfil</CardTitle>
           <CardDescription>
             Completa tus datos para personalizar tu plan de entrenamiento y seguimiento.
           </CardDescription>
@@ -182,7 +184,7 @@ export function ProfileForm({ user, gyms, roles }: Props) {
                 name="name"
                 value={form.name}
                 hasError={Boolean(fieldErrors.name)}
-                onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+                onChange={(event) => updateField("name", event.target.value)}
                 disabled={isPending}
                 required
               />
@@ -200,7 +202,7 @@ export function ProfileForm({ user, gyms, roles }: Props) {
                   type="number"
                   value={form.age}
                   hasError={Boolean(fieldErrors.age)}
-                  onChange={(event) => setForm((prev) => ({ ...prev, age: event.target.value }))}
+                  onChange={(event) => updateField("age", event.target.value)}
                   disabled={isPending}
                 />
                 {fieldErrors.age && <p className="text-xs text-red-300">{fieldErrors.age}</p>}
@@ -216,7 +218,7 @@ export function ProfileForm({ user, gyms, roles }: Props) {
                   step="0.1"
                   value={form.weight}
                   hasError={Boolean(fieldErrors.weight)}
-                  onChange={(event) => setForm((prev) => ({ ...prev, weight: event.target.value }))}
+                  onChange={(event) => updateField("weight", event.target.value)}
                   disabled={isPending}
                 />
                 {fieldErrors.weight && <p className="text-xs text-red-300">{fieldErrors.weight}</p>}
@@ -235,7 +237,7 @@ export function ProfileForm({ user, gyms, roles }: Props) {
                   step="0.1"
                   value={form.height}
                   hasError={Boolean(fieldErrors.height)}
-                  onChange={(event) => setForm((prev) => ({ ...prev, height: event.target.value }))}
+                  onChange={(event) => updateField("height", event.target.value)}
                   disabled={isPending}
                 />
                 {fieldErrors.height && <p className="text-xs text-red-300">{fieldErrors.height}</p>}
@@ -252,9 +254,7 @@ export function ProfileForm({ user, gyms, roles }: Props) {
                   max={10}
                   value={form.activityIndex}
                   hasError={Boolean(fieldErrors.activityIndex)}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, activityIndex: event.target.value }))
-                  }
+                  onChange={(event) => updateField("activityIndex", event.target.value)}
                   disabled={isPending}
                 />
                 {fieldErrors.activityIndex && (
@@ -272,7 +272,7 @@ export function ProfileForm({ user, gyms, roles }: Props) {
                 name="goal"
                 value={form.goal}
                 hasError={Boolean(fieldErrors.goal)}
-                onChange={(event) => setForm((prev) => ({ ...prev, goal: event.target.value }))}
+                onChange={(event) => updateField("goal", event.target.value)}
                 disabled={isPending}
               >
                 <option value={defaultGoal} disabled>
@@ -297,33 +297,11 @@ export function ProfileForm({ user, gyms, roles }: Props) {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="roleId" className="text-sm font-medium text-zinc-300">
-                Rol asignado
-              </label>
-              {!user.roleId ? (
-                <>
-                  <Select
-                    id="roleId"
-                    name="roleId"
-                    value={form.roleId}
-                    hasError={Boolean(fieldErrors.roleId)}
-                    onChange={(event) => setForm((prev) => ({ ...prev, roleId: event.target.value }))}
-                    disabled={isPending}
-                  >
-                    <option value="" disabled>
-                      Selecciona tu rol...
-                    </option>
-                    {roles.map((role) => (
-                      <option key={role.id} value={role.id}>
-                        {role.name}
-                      </option>
-                    ))}
-                  </Select>
-                  {fieldErrors.roleId && <p className="text-xs text-red-300">{fieldErrors.roleId}</p>}
-                </>
-              ) : (
-                <Input value={user.role?.name || "Sin asignar"} readOnly disabled />
-              )}
+              <label className="text-sm font-medium text-zinc-300">Rol asignado</label>
+              <Input value={user.role?.name || "Usuario"} readOnly disabled />
+              <p className="text-xs text-zinc-500">
+                El rol de acceso lo asigna únicamente un administrador.
+              </p>
             </div>
 
             <Button type="submit" loading={isPending} className="w-full sm:w-auto">
@@ -359,4 +337,3 @@ export function ProfileForm({ user, gyms, roles }: Props) {
     </>
   );
 }
-

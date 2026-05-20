@@ -57,6 +57,16 @@ export function AddWorkoutModal({
     setError(null);
   };
 
+  const updateField = (field: keyof WorkoutFormState, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
   const payload = useMemo(() => {
     return {
       exerciseId: formData.exerciseId,
@@ -164,7 +174,7 @@ export function AddWorkoutModal({
               type="datetime-local"
               value={formData.recordedAt}
               hasError={Boolean(fieldErrors.recordedAt)}
-              onChange={(event) => setFormData((prev) => ({ ...prev, recordedAt: event.target.value }))}
+              onChange={(event) => updateField("recordedAt", event.target.value)}
               required
               disabled={loading}
             />
@@ -179,7 +189,7 @@ export function AddWorkoutModal({
               id="workout-exercise"
               value={formData.exerciseId}
               hasError={Boolean(fieldErrors.exerciseId)}
-              onChange={(event) => setFormData((prev) => ({ ...prev, exerciseId: event.target.value }))}
+              onChange={(event) => updateField("exerciseId", event.target.value)}
               required
               disabled={loading}
             >
@@ -206,7 +216,7 @@ export function AddWorkoutModal({
                 min={1}
                 value={formData.sets}
                 hasError={Boolean(fieldErrors.sets)}
-                onChange={(event) => setFormData((prev) => ({ ...prev, sets: event.target.value }))}
+                onChange={(event) => updateField("sets", event.target.value)}
                 required
                 disabled={loading}
               />
@@ -222,7 +232,7 @@ export function AddWorkoutModal({
                 min={1}
                 value={formData.reps}
                 hasError={Boolean(fieldErrors.reps)}
-                onChange={(event) => setFormData((prev) => ({ ...prev, reps: event.target.value }))}
+                onChange={(event) => updateField("reps", event.target.value)}
                 required
                 disabled={loading}
               />
@@ -239,7 +249,7 @@ export function AddWorkoutModal({
                 step="0.1"
                 value={formData.weightLoad}
                 hasError={Boolean(fieldErrors.weightLoad)}
-                onChange={(event) => setFormData((prev) => ({ ...prev, weightLoad: event.target.value }))}
+                onChange={(event) => updateField("weightLoad", event.target.value)}
                 required
                 disabled={loading}
               />

@@ -137,7 +137,7 @@ export function GymsView({ initialGyms, activeCities }: Props) {
             <tr>
               <th className="px-6 py-4 font-medium">Nombre</th>
               <th className="px-6 py-4 font-medium">Ciudad</th>
-              <th className="px-6 py-4 font-medium">Direccion</th>
+              <th className="px-6 py-4 font-medium">Dirección</th>
               <th className="px-6 py-4 font-medium">Estado</th>
               <th className="px-6 py-4 text-right font-medium">Acciones</th>
             </tr>
@@ -219,7 +219,7 @@ export function GymsView({ initialGyms, activeCities }: Props) {
 
           <div>
             <label htmlFor="gym-address" className="mb-1 block text-sm text-zinc-300">
-              Direccion (opcional)
+              Dirección (opcional)
             </label>
             <Input
               id="gym-address"
@@ -240,7 +240,7 @@ export function GymsView({ initialGyms, activeCities }: Props) {
                 }
                 className="h-4 w-4 accent-spartan"
               />
-              Activo desde su creacion
+              Activo desde su creación
             </label>
           )}
 
@@ -257,3 +257,4 @@ export function GymsView({ initialGyms, activeCities }: Props) {
     </div>
   );
 }
+

@@ -89,6 +89,16 @@
   - Validación de variables `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` antes de iniciar OAuth.
   - Mensaje toast claro cuando la configuración apunta a placeholder (`example.supabase.co`).
   - Archivo `.env.example` agregado para configuración correcta local.
+- Seguridad de roles (brecha corregida):
+  - Se eliminó la asignación de roles desde `/profile` (UI y Server Action).
+  - `updateProfileAction` ahora bloquea explícitamente cualquier intento de modificar `roleId`.
+  - Onboarding ya no depende de `roleId`; solo de completar objetivo.
+- Chat UX:
+  - El avatar del usuario ahora usa su nombre real para iniciales (no inicial fija `T`).
+- Idioma y visual:
+  - Se restauraron acentos/`ñ` en textos críticos visibles.
+  - Inputs numéricos sin spinners del navegador para consistencia visual.
+  - Limpieza de estados de error por campo al corregir inputs (evita bordes rojos persistentes).
 - Confirmación de que no hay `alert()/confirm()` nativos en los flujos pulidos.
 
 ## Revisión Prisma/Supabase

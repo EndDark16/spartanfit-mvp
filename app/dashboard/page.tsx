@@ -27,7 +27,7 @@ export default async function DashboardPage() {
 
   const dbUser = await UserService.syncUser(user);
 
-  if (dbUser.goal === "pending" || !dbUser.roleId) {
+  if (dbUser.goal === "pending") {
     redirect("/profile");
   }
 
@@ -139,4 +139,5 @@ export default async function DashboardPage() {
     </AppShell>
   );
 }
+
 

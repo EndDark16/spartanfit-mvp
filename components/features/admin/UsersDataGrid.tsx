@@ -56,7 +56,7 @@ export function UsersDataGrid({ users, totalCount, page, setPage, isLoading, onE
                   <td className="px-6 py-4">
                     <Badge variant="muted">{user.role?.name || "Sin rol"}</Badge>
                   </td>
-                  <td className="px-6 py-4 text-zinc-300">{user.age ? `${user.age} anos` : "-"}</td>
+                  <td className="px-6 py-4 text-zinc-300">{user.age ? `${user.age} años` : "-"}</td>
                   <td className="px-6 py-4 text-zinc-300">{user.weight ? `${user.weight} kg` : "-"}</td>
                   <td className="px-6 py-4">
                     <Badge variant={user.status === "ACTIVE" ? "success" : "danger"}>
@@ -108,3 +108,4 @@ export function UsersDataGrid({ users, totalCount, page, setPage, isLoading, onE
     </div>
   );
 }
+

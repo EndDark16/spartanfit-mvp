@@ -18,10 +18,9 @@ export default async function ProfilePage() {
     redirect("/");
   }
 
-  const [dbUser, gyms, roles] = await Promise.all([
+  const [dbUser, gyms] = await Promise.all([
     UserService.syncUser(user),
     UserService.getGymLocations(),
-    UserService.getRoles(),
   ]);
 
   return (
@@ -29,11 +28,10 @@ export default async function ProfilePage() {
       userName={dbUser.name || user.email || "Atleta"}
       userEmail={user.email || ""}
       isAdmin={dbUser.role?.name === "ADMIN"}
-      title={dbUser.goal === "pending" || !dbUser.roleId ? "Completa tu perfil" : "Configuración de perfil"}
+      title={dbUser.goal === "pending" ? "Completa tu perfil" : "Configuración de perfil"}
       description="Ajusta tus datos físicos, objetivo y configuración de cuenta."
     >
-      <ProfileForm user={dbUser} gyms={gyms} roles={roles} />
+      <ProfileForm user={dbUser} gyms={gyms} />
     </AppShell>
   );
 }
-

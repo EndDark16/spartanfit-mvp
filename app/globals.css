@@ -52,6 +52,30 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
+}
+
 .bg-page-gradient {
   background-image:
     radial-gradient(45% 35% at 8% 5%, rgba(194, 37, 36, 0.12), transparent 85%),

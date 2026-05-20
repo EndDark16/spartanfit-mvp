@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/layout/AppShell";
+﻿import { AppShell } from "@/components/layout/AppShell";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { UserService } from "@/lib/services/user.service";
@@ -22,7 +22,7 @@ export default async function ProgressPage() {
   }
 
   const dbUser = await UserService.syncUser(user);
-  if (dbUser.goal === "pending" || !dbUser.roleId) {
+  if (dbUser.goal === "pending") {
     redirect("/profile");
   }
 

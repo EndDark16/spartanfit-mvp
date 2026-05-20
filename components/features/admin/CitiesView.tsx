@@ -155,7 +155,7 @@ export function CitiesView({ initialCities }: Props) {
                 }
                 className="h-4 w-4 accent-spartan"
               />
-              Activo desde su creacion
+              Activo desde su creación
             </label>
           )}
 
@@ -172,3 +172,4 @@ export function CitiesView({ initialCities }: Props) {
     </div>
   );
 }
+

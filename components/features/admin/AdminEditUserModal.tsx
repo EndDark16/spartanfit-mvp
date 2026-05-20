@@ -141,7 +141,7 @@ export function AdminEditUserModal({ user, roles, locations, onClose, onSuccess 
           </div>
           <div>
             <label htmlFor="admin-activity" className="mb-1 block text-sm text-zinc-300">
-              Indice actividad
+              Índice actividad
             </label>
             <Input
               id="admin-activity"
@@ -215,3 +215,4 @@ export function AdminEditUserModal({ user, roles, locations, onClose, onSuccess 
     </Dialog>
   );
 }
+

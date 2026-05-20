@@ -1,4 +1,4 @@
-import { getChatMessagesAction } from "@/actions/chat.actions";
+﻿import { getChatMessagesAction } from "@/actions/chat.actions";
 import { ChatPanel } from "@/components/features/chat/ChatPanel";
 import { AppShell } from "@/components/layout/AppShell";
 import { UserService } from "@/lib/services/user.service";
@@ -24,19 +24,22 @@ export default async function ChatPage() {
     getChatMessagesAction(),
   ]);
 
-  if (dbUser.goal === "pending" || !dbUser.roleId) {
+  if (dbUser.goal === "pending") {
     redirect("/profile");
   }
 
+  const safeUserName = dbUser.name || user.email || "Atleta";
+
   return (
     <AppShell
-      userName={dbUser.name || user.email || "Atleta"}
+      userName={safeUserName}
       userEmail={user.email || ""}
       isAdmin={dbUser.role?.name === "ADMIN"}
       title="Coach IA SpartanFit"
       description="Consulta rutinas, estrategia de fuerza y análisis de progreso."
     >
       <ChatPanel
+        userName={safeUserName}
         initialMessages={messages.map((message) => ({
           ...message,
           role: message.role as "user" | "coach",

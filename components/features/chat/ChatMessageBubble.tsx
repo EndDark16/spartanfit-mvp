@@ -1,4 +1,4 @@
-import { Bot } from "lucide-react";
+﻿import { Bot } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils/cn";
 
@@ -6,9 +6,10 @@ interface ChatMessageBubbleProps {
   role: "user" | "coach";
   content: string;
   createdAt: Date;
+  userName?: string;
 }
 
-export function ChatMessageBubble({ role, content, createdAt }: ChatMessageBubbleProps) {
+export function ChatMessageBubble({ role, content, createdAt, userName }: ChatMessageBubbleProps) {
   const isUser = role === "user";
   return (
     <div className={cn("flex gap-2", isUser ? "justify-end" : "justify-start")}>
@@ -37,7 +38,7 @@ export function ChatMessageBubble({ role, content, createdAt }: ChatMessageBubbl
         </p>
       </div>
 
-      {isUser && <Avatar className="mt-0.5 h-9 w-9 text-xs" name="Tú" />}
+      {isUser && <Avatar className="mt-0.5 h-9 w-9 text-xs" name={userName || "Usuario"} />}
     </div>
   );
 }

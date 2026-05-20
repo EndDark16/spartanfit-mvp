@@ -21,7 +21,7 @@ export function GoogleLoginButton() {
     if (!hasValidSupabaseConfig) {
       pushToast({
         variant: "error",
-        title: "Configura Supabase antes de iniciar sesion",
+        title: "Configura Supabase antes de iniciar sesión",
         description:
           "Define NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY con valores reales en .env.",
       });
