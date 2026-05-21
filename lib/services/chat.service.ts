@@ -15,6 +15,11 @@ export interface CoachReplyResult {
   reason?: string;
 }
 
+interface KnowledgeChunkRow {
+  content: string;
+  metadata: unknown;
+}
+
 function getFallbackReply(input: {
   userMessage: string;
   recentMessages: ChatMessageRecord[];
@@ -52,6 +57,39 @@ function mapGeminiErrorToReason(error: unknown): string {
   return "gemini_error";
 }
 
+function readMeta(metadata: unknown, key: string): string | null {
+  if (!metadata || typeof metadata !== "object") {
+    return null;
+  }
+
+  const value = (metadata as Record<string, unknown>)[key];
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.filter((entry): entry is string => typeof entry === "string").join(", ");
+  }
+
+  return null;
+}
+
+function formatKnowledgeContext(chunks: KnowledgeChunkRow[]) {
+  return chunks
+    .map((chunk) => {
+      const title = readMeta(chunk.metadata, "title");
+      const authors = readMeta(chunk.metadata, "authors");
+      const category = readMeta(chunk.metadata, "category");
+
+      const sourceInfo = title
+        ? `[Fuente: \"${title}\" | Autor(es): ${authors || "Desconocido"} | Categoría: ${category || "N/A"}]`
+        : "";
+
+      return `${sourceInfo}\nContenido: ${chunk.content}`.trim();
+    })
+    .join("\n\n---\n\n");
+}
+
 export class ChatService {
   static async getMessagesByUser(userId: string): Promise<ChatMessageRecord[]> {
     const messages = await prisma.chatMessage.findMany({
@@ -72,13 +110,125 @@ export class ChatService {
     });
   }
 
+  private static async getKnowledgeContext(userMessage: string): Promise<string | undefined> {
+    if (!GeminiService.isConfigured()) {
+      return undefined;
+    }
+
+    try {
+      const embedding = await GeminiService.generateEmbedding({
+        text: `task: search query | query: ${userMessage}`,
+        outputDimensionality: 768,
+      });
+
+      if (!embedding.vector || embedding.vector.length === 0) {
+        return undefined;
+      }
+
+      const vectorLiteral = `[${embedding.vector.map((value) => Number(value).toFixed(8)).join(",")}]`;
+
+      const chunks = await prisma.$queryRaw<KnowledgeChunkRow[]>`
+        SELECT content, metadata
+        FROM match_knowledge_chunks(
+          ${vectorLiteral}::vector,
+          ${0.5},
+          ${5}
+        )
+      `;
+
+      if (!chunks || chunks.length === 0) {
+        return undefined;
+      }
+
+      return formatKnowledgeContext(chunks);
+    } catch (error) {
+      console.warn("RAG context unavailable, continuing without retrieval:", error);
+      return undefined;
+    }
+  }
+
+  private static async getUserTrainingStats(userId: string): Promise<Record<string, unknown>> {
+    const referenceDate = new Date();
+    const fromDate = new Date(referenceDate.getTime() - 28 * 24 * 60 * 60 * 1000);
+
+    const workouts = await prisma.workoutLog.findMany({
+      where: {
+        userId,
+        recordedAt: {
+          gte: fromDate,
+        },
+      },
+      include: {
+        exercise: {
+          select: { name: true },
+        },
+      },
+      orderBy: {
+        recordedAt: "desc",
+      },
+      take: 300,
+    });
+
+    if (workouts.length === 0) {
+      return {
+        sesionesUltimos28Dias: 0,
+        diasActivosPorSemana: 0,
+        volumenSemanalKgAprox: 0,
+      };
+    }
+
+    const activeDays = new Set<string>();
+    const exerciseUsage = new Map<string, number>();
+
+    let totalVolume = 0;
+    let maxLoad = 0;
+
+    for (const workout of workouts) {
+      activeDays.add(workout.recordedAt.toISOString().slice(0, 10));
+
+      const exerciseName = workout.exercise?.name || "Sin ejercicio";
+      exerciseUsage.set(exerciseName, (exerciseUsage.get(exerciseName) || 0) + 1);
+
+      const volume = workout.weightLoad * workout.reps * workout.sets;
+      if (Number.isFinite(volume)) {
+        totalVolume += volume;
+      }
+
+      if (workout.weightLoad > maxLoad) {
+        maxLoad = workout.weightLoad;
+      }
+    }
+
+    const favoriteExercise = [...exerciseUsage.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+    return {
+      sesionesUltimos28Dias: workouts.length,
+      diasActivosPorSemana: Number((activeDays.size / 4).toFixed(1)),
+      volumenSemanalKgAprox: Number((totalVolume / 4).toFixed(1)),
+      ejercicioFrecuente: favoriteExercise,
+      cargaMaxKgReciente: Number(maxLoad.toFixed(1)),
+    };
+  }
+
   static async generateCoachReply(input: {
+    userId: string;
     userMessage: string;
     recentMessages: ChatMessageRecord[];
   }): Promise<CoachReplyResult> {
+    const [knowledgeContext, userStats] = await Promise.all([
+      this.getKnowledgeContext(input.userMessage),
+      this.getUserTrainingStats(input.userId),
+    ]);
+
     if (GeminiService.isConfigured()) {
       try {
-        const aiReply = await GeminiService.generateReply(input);
+        const aiReply = await GeminiService.generateReply({
+          userMessage: input.userMessage,
+          recentMessages: input.recentMessages,
+          knowledgeContext,
+          userStats,
+        });
+
         if (aiReply.text) {
           return {
             source: "gemini",

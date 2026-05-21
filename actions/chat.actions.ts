@@ -44,6 +44,7 @@ export async function sendChatMessageAction(rawMessage: string) {
 
     const createdUserMessage = await ChatService.createMessage(userId, "user", userMessage);
     const coachReply = await ChatService.generateCoachReply({
+      userId,
       userMessage,
       recentMessages: existingMessages.slice(-12),
     });

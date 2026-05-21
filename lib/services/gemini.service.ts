@@ -25,25 +25,48 @@ interface GeminiModelsResponse {
   models?: GeminiModel[];
 }
 
+interface GeminiEmbeddingResponse {
+  embedding?: { values?: number[] };
+  embeddings?: Array<{ values?: number[] }>;
+}
+
 interface GeminiReplyResult {
   text: string | null;
   model: string;
 }
 
+interface GeminiEmbeddingResult {
+  vector: number[] | null;
+  model: string;
+}
+
 const MODEL_CACHE_TTL_MS = 5 * 60 * 1000;
 
-function buildPrompt(input: { userMessage: string; recentMessages: ChatMessageRecord[] }) {
+function buildPrompt(input: {
+  userMessage: string;
+  recentMessages: ChatMessageRecord[];
+  knowledgeContext?: string;
+  userStats?: Record<string, unknown>;
+}) {
   const contextMessages = input.recentMessages
     .slice(-8)
     .map((message) => `${message.role === "user" ? "Usuario" : "Coach"}: ${message.content}`)
     .join("\n");
 
   return [
-    "Eres SpartanFit IA, un coach de fitness en español.",
-    "Responde de forma útil, segura y accionable.",
-    "No inventes datos personales ni médicos.",
-    "Si hay riesgos, sugiere consultar un profesional.",
-    "Mantén respuestas entre 3 y 7 líneas.",
+    "Eres SpartanFit IA, un coach profesional de fitness y nutrición en español.",
+    "Responde de forma clara, accionable y segura.",
+    "Solo responde temas de entrenamiento, salud física y nutrición deportiva.",
+    "Si preguntan fuera de ese alcance, indícalo con respeto y redirige al entrenamiento.",
+    "No inventes datos personales ni diagnósticos médicos.",
+    "Si detectas riesgo de lesión o salud, recomienda consulta profesional.",
+    "Mantén respuestas entre 3 y 7 líneas, con pasos concretos.",
+    input.knowledgeContext
+      ? `CONTEXTO DE CONOCIMIENTO (RAG):\n${input.knowledgeContext}`
+      : "",
+    input.userStats
+      ? `ESTADÍSTICAS DEL USUARIO:\n${JSON.stringify(input.userStats, null, 2)}`
+      : "",
     contextMessages ? `Contexto reciente:\n${contextMessages}` : "",
     `Mensaje actual del usuario: ${input.userMessage}`,
   ]
@@ -51,16 +74,22 @@ function buildPrompt(input: { userMessage: string; recentMessages: ChatMessageRe
     .join("\n\n");
 }
 
+function normalizeModelName(model: string) {
+  return model.startsWith("models/") ? model.replace("models/", "") : model;
+}
+
 export class GeminiService {
-  private static cachedModels: string[] | null = null;
-  private static cachedAt = 0;
+  private static cacheByMethod: Record<"generateContent" | "embedContent", { models: string[]; cachedAt: number }> = {
+    generateContent: { models: [], cachedAt: 0 },
+    embedContent: { models: [], cachedAt: 0 },
+  };
 
   static isConfigured() {
     const key = process.env.GEMINI_API_KEY?.trim();
     return Boolean(key && key.length > 20);
   }
 
-  private static getConfiguredModelCandidates() {
+  private static getConfiguredTextModelCandidates() {
     const envModel = process.env.GEMINI_MODEL?.trim();
     const candidates = [
       envModel,
@@ -73,14 +102,27 @@ export class GeminiService {
     return [...new Set(candidates)];
   }
 
-  private static normalizeModelName(model: string) {
-    return model.startsWith("models/") ? model.replace("models/", "") : model;
+  private static getConfiguredEmbeddingModelCandidates() {
+    const envModel = process.env.GEMINI_EMBEDDING_MODEL?.trim();
+    const candidates = [
+      envModel,
+      "gemini-embedding-001",
+      "text-embedding-004",
+      "gemini-embedding-exp-03-07",
+    ].filter((model): model is string => Boolean(model));
+
+    return [...new Set(candidates)];
   }
 
-  private static async fetchAvailableModels(apiKey: string): Promise<string[]> {
+  private static async fetchAvailableModelsByMethod(
+    apiKey: string,
+    method: "generateContent" | "embedContent",
+  ): Promise<string[]> {
+    const cache = this.cacheByMethod[method];
     const now = Date.now();
-    if (this.cachedModels && now - this.cachedAt < MODEL_CACHE_TTL_MS) {
-      return this.cachedModels;
+
+    if (cache.models.length > 0 && now - cache.cachedAt < MODEL_CACHE_TTL_MS) {
+      return cache.models;
     }
 
     const response = await fetch(
@@ -97,18 +139,27 @@ export class GeminiService {
 
     const data = (await response.json()) as GeminiModelsResponse;
     const models = (data.models || [])
-      .filter((model) => model.supportedGenerationMethods?.includes("generateContent"))
-      .map((model) => this.normalizeModelName(model.name))
-      .filter((name) => name.startsWith("gemini-"));
+      .filter((model) => model.supportedGenerationMethods?.includes(method))
+      .map((model) => normalizeModelName(model.name));
 
-    this.cachedModels = [...new Set(models)];
-    this.cachedAt = now;
-    return this.cachedModels;
+    const unique = [...new Set(models)];
+    this.cacheByMethod[method] = { models: unique, cachedAt: now };
+    return unique;
   }
 
-  private static async getModelCandidates(apiKey: string) {
-    const preferred = this.getConfiguredModelCandidates();
-    const available = await this.fetchAvailableModels(apiKey);
+  private static async getTextModelCandidates(apiKey: string) {
+    const preferred = this.getConfiguredTextModelCandidates();
+    const available = await this.fetchAvailableModelsByMethod(apiKey, "generateContent");
+
+    const prioritized = preferred.filter((model) => available.includes(model));
+    const fallback = available.filter((model) => !prioritized.includes(model));
+
+    return [...prioritized, ...fallback];
+  }
+
+  private static async getEmbeddingModelCandidates(apiKey: string) {
+    const preferred = this.getConfiguredEmbeddingModelCandidates();
+    const available = await this.fetchAvailableModelsByMethod(apiKey, "embedContent");
 
     const prioritized = preferred.filter((model) => available.includes(model));
     const fallback = available.filter((model) => !prioritized.includes(model));
@@ -121,13 +172,13 @@ export class GeminiService {
     if (!configured) {
       return {
         configured: false,
-        modelCandidates: this.getConfiguredModelCandidates(),
+        modelCandidates: this.getConfiguredTextModelCandidates(),
       };
     }
 
     const apiKey = process.env.GEMINI_API_KEY!.trim();
     try {
-      const candidates = await this.getModelCandidates(apiKey);
+      const candidates = await this.getTextModelCandidates(apiKey);
       return {
         configured: true,
         modelCandidates: candidates,
@@ -135,19 +186,80 @@ export class GeminiService {
     } catch {
       return {
         configured: true,
-        modelCandidates: this.getConfiguredModelCandidates(),
+        modelCandidates: this.getConfiguredTextModelCandidates(),
       };
     }
+  }
+
+  static async generateEmbedding(input: {
+    text: string;
+    outputDimensionality?: number;
+  }): Promise<GeminiEmbeddingResult> {
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
+    if (!apiKey) {
+      return { vector: null, model: "none" };
+    }
+
+    const models = await this.getEmbeddingModelCandidates(apiKey);
+    let lastError: Error | null = null;
+
+    for (const model of models) {
+      try {
+        const requestBody = {
+          model: `models/${model}`,
+          content: {
+            parts: [{ text: input.text }],
+          },
+          ...(input.outputDimensionality
+            ? {
+                outputDimensionality: input.outputDimensionality,
+              }
+            : {}),
+        };
+
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody),
+            cache: "no-store",
+          },
+        );
+
+        if (!response.ok) {
+          const raw = await response.text();
+          throw new Error(`Gemini embedding ${model} failed ${response.status}: ${raw.slice(0, 240)}`);
+        }
+
+        const data = (await response.json()) as GeminiEmbeddingResponse;
+        const vector = data.embedding?.values || data.embeddings?.[0]?.values || null;
+
+        if (Array.isArray(vector) && vector.length > 0) {
+          return { vector, model };
+        }
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error("Unknown Gemini embedding error");
+      }
+    }
+
+    if (lastError) {
+      console.error("Gemini embedding failed:", lastError.message);
+    }
+
+    return { vector: null, model: models[0] || "unknown" };
   }
 
   static async generateReply(input: {
     userMessage: string;
     recentMessages: ChatMessageRecord[];
+    knowledgeContext?: string;
+    userStats?: Record<string, unknown>;
   }): Promise<GeminiReplyResult> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return { text: null, model: "none" };
 
-    const models = await this.getModelCandidates(apiKey.trim());
+    const models = await this.getTextModelCandidates(apiKey.trim());
     let lastError: Error | null = null;
 
     for (const model of models) {
@@ -164,9 +276,9 @@ export class GeminiService {
                 },
               ],
               generationConfig: {
-                temperature: 0.6,
+                temperature: 0.3,
                 topP: 0.9,
-                maxOutputTokens: 400,
+                maxOutputTokens: 500,
               },
             }),
             cache: "no-store",
