@@ -41,8 +41,12 @@ export function WorkoutProgressCharts({ chartsData }: { chartsData: ChartData[] 
 
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-      {chartsData.map((chart) => (
-        <Card key={chart.exerciseName} className="overflow-hidden">
+      {chartsData.map((chart, index) => (
+        <Card
+          key={chart.exerciseName}
+          className="overflow-hidden animate-[fade-in-up_500ms_ease-out_both] motion-reduce:animate-none"
+          style={{ animationDelay: `${index * 70}ms` }}
+        >
           <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
             <CardTitle className="max-w-[70%] truncate text-base capitalize">
               {chart.exerciseName}
@@ -53,7 +57,7 @@ export function WorkoutProgressCharts({ chartsData }: { chartsData: ChartData[] 
           </CardHeader>
           <CardContent>
             <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" debounce={120}>
                 <LineChart data={chart.data} margin={{ top: 4, right: 8, bottom: 6, left: -16 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" vertical={false} />
                   <XAxis
@@ -61,6 +65,7 @@ export function WorkoutProgressCharts({ chartsData }: { chartsData: ChartData[] 
                     stroke="#a1a1aa"
                     tick={{ fill: "#a1a1aa", fontSize: 11 }}
                     tickMargin={8}
+                    minTickGap={20}
                   />
                   <YAxis
                     stroke="#a1a1aa"
@@ -73,6 +78,7 @@ export function WorkoutProgressCharts({ chartsData }: { chartsData: ChartData[] 
                       borderColor: "#3f3f46",
                       color: "#fff",
                       borderRadius: "0.75rem",
+                      boxShadow: "0 10px 26px rgba(0,0,0,0.35)",
                     }}
                     labelStyle={{ color: "#d4d4d8" }}
                     itemStyle={{ color: "#f87171", fontWeight: "bold" }}
@@ -85,6 +91,9 @@ export function WorkoutProgressCharts({ chartsData }: { chartsData: ChartData[] 
                     strokeWidth={2.5}
                     dot={{ fill: "#18181b", stroke: "#c22524", strokeWidth: 2, r: 3 }}
                     activeDot={{ r: 5, fill: "#c22524" }}
+                    isAnimationActive
+                    animationDuration={700}
+                    animationEasing="ease-out"
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -95,4 +104,3 @@ export function WorkoutProgressCharts({ chartsData }: { chartsData: ChartData[] 
     </div>
   );
 }
-
