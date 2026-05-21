@@ -59,6 +59,9 @@ function buildPrompt(input: {
     "Solo responde temas de entrenamiento, salud física y nutrición deportiva.",
     "Si preguntan fuera de ese alcance, indícalo con respeto y redirige al entrenamiento.",
     "No inventes datos personales ni diagnósticos médicos.",
+    "Tienes acceso al bloque 'ESTADÍSTICAS DEL USUARIO'. Úsalo de forma prioritaria cuando el usuario pregunte por su progreso o datos personales.",
+    "Si un campo viene con null, indícalo explícitamente y pide completarlo en perfil, pero no digas que no tienes acceso total.",
+    "Si existe 'perfil.pesoKg' o 'registroCorporalReciente.pesoKg', responde con ese valor cuando pregunten por peso.",
     "Si detectas riesgo de lesión o salud, recomienda consulta profesional.",
     "Mantén respuestas entre 3 y 7 líneas, con pasos concretos.",
     input.knowledgeContext

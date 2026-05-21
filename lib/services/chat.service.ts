@@ -20,11 +20,53 @@ interface KnowledgeChunkRow {
   metadata: unknown;
 }
 
+interface UserProfileContext {
+  nombre: string;
+  edad: number | null;
+  pesoKg: number | null;
+  alturaCm: number | null;
+  indiceActividad: number | null;
+  objetivo: string;
+  gimnasios: string[];
+}
+
 function getFallbackReply(input: {
   userMessage: string;
   recentMessages: ChatMessageRecord[];
+  userContext?: Record<string, unknown>;
 }) {
   const message = input.userMessage.toLowerCase();
+  const profile = input.userContext?.perfil as
+    | {
+        pesoKg?: number | null;
+        alturaCm?: number | null;
+        edad?: number | null;
+        objetivo?: string;
+      }
+    | undefined;
+
+  const normalized = message.normalize("NFD").replace(/\p{Diacritic}/gu, "");
+
+  if (normalized.includes("peso")) {
+    if (typeof profile?.pesoKg === "number") {
+      return `Tu peso registrado es ${profile.pesoKg} kg. Si quieres, puedo usar este dato para proponerte un objetivo semanal realista.`;
+    }
+    return "Aún no tengo un peso registrado en tu perfil. Ve a Perfil y completa 'Peso (kg)' para personalizar mejor tus recomendaciones.";
+  }
+
+  if (normalized.includes("altura")) {
+    if (typeof profile?.alturaCm === "number") {
+      return `Tu altura registrada es ${profile.alturaCm} cm. Si quieres, la uso junto con tu objetivo para ajustar recomendaciones de entrenamiento.`;
+    }
+    return "Aún no tengo tu altura registrada. Completa ese campo en tu perfil para mejorar la personalización del plan.";
+  }
+
+  if (normalized.includes("edad")) {
+    if (typeof profile?.edad === "number") {
+      return `Tu edad registrada es ${profile.edad} años. Con ese dato puedo ajustar progresión y volumen de forma más segura.`;
+    }
+    return "Aún no tengo tu edad registrada. Si la completas en perfil, podré ajustar mejor intensidad y recuperación.";
+  }
 
   if (message.includes("hipertrofia")) {
     return "Para hipertrofia, prioriza 10-20 series semanales por grupo muscular, progresión de carga y sueño consistente. Si quieres, te propongo una rutina de hoy según tu nivel.";
@@ -147,7 +189,36 @@ export class ChatService {
     }
   }
 
-  private static async getUserTrainingStats(userId: string): Promise<Record<string, unknown>> {
+  private static async getUserContext(userId: string): Promise<Record<string, unknown>> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        name: true,
+        age: true,
+        weight: true,
+        height: true,
+        activityIndex: true,
+        goal: true,
+        userGyms: {
+          select: {
+            gymLocation: {
+              select: { name: true },
+            },
+          },
+        },
+      },
+    });
+
+    const latestMetric = await prisma.metric.findFirst({
+      where: { userId },
+      orderBy: { recordedAt: "desc" },
+      select: {
+        weight: true,
+        height: true,
+        recordedAt: true,
+      },
+    });
+
     const referenceDate = new Date();
     const fromDate = new Date(referenceDate.getTime() - 28 * 24 * 60 * 60 * 1000);
 
@@ -168,14 +239,6 @@ export class ChatService {
       },
       take: 300,
     });
-
-    if (workouts.length === 0) {
-      return {
-        sesionesUltimos28Dias: 0,
-        diasActivosPorSemana: 0,
-        volumenSemanalKgAprox: 0,
-      };
-    }
 
     const activeDays = new Set<string>();
     const exerciseUsage = new Map<string, number>();
@@ -201,12 +264,35 @@ export class ChatService {
 
     const favoriteExercise = [...exerciseUsage.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
 
+    const profile: UserProfileContext = {
+      nombre: user?.name || "Atleta",
+      edad: user?.age ?? null,
+      pesoKg: latestMetric?.weight ?? user?.weight ?? null,
+      alturaCm: latestMetric?.height ?? user?.height ?? null,
+      indiceActividad: user?.activityIndex ?? null,
+      objetivo: user?.goal || "pending",
+      gimnasios:
+        user?.userGyms
+          .map((entry) => entry.gymLocation?.name)
+          .filter((name): name is string => Boolean(name)) || [],
+    };
+
     return {
-      sesionesUltimos28Dias: workouts.length,
-      diasActivosPorSemana: Number((activeDays.size / 4).toFixed(1)),
-      volumenSemanalKgAprox: Number((totalVolume / 4).toFixed(1)),
-      ejercicioFrecuente: favoriteExercise,
-      cargaMaxKgReciente: Number(maxLoad.toFixed(1)),
+      perfil: profile,
+      registroCorporalReciente: latestMetric
+        ? {
+            pesoKg: latestMetric.weight,
+            alturaCm: latestMetric.height,
+            fecha: latestMetric.recordedAt.toISOString(),
+          }
+        : null,
+      entrenamiento: {
+        sesionesUltimos28Dias: workouts.length,
+        diasActivosPorSemana: Number((activeDays.size / 4).toFixed(1)),
+        volumenSemanalKgAprox: Number((totalVolume / 4).toFixed(1)),
+        ejercicioFrecuente: favoriteExercise,
+        cargaMaxKgReciente: Number(maxLoad.toFixed(1)),
+      },
     };
   }
 
@@ -217,7 +303,7 @@ export class ChatService {
   }): Promise<CoachReplyResult> {
     const [knowledgeContext, userStats] = await Promise.all([
       this.getKnowledgeContext(input.userMessage),
-      this.getUserTrainingStats(input.userId),
+      this.getUserContext(input.userId),
     ]);
 
     if (GeminiService.isConfigured()) {
@@ -240,7 +326,7 @@ export class ChatService {
         console.error("Gemini reply failed, using fallback reply:", error);
         return {
           source: "fallback",
-          content: getFallbackReply(input),
+          content: getFallbackReply({ ...input, userContext: userStats }),
           reason: mapGeminiErrorToReason(error),
         };
       }
@@ -248,7 +334,7 @@ export class ChatService {
 
     return {
       source: "fallback",
-      content: getFallbackReply(input),
+      content: getFallbackReply({ ...input, userContext: userStats }),
       reason: GeminiService.isConfigured() ? "empty_response" : "missing_api_key",
     };
   }
