@@ -103,8 +103,8 @@ export class ChatService {
     };
   }
 
-  static getProviderStatus() {
-    const status = GeminiService.getStatus();
+  static async getProviderStatus() {
+    const status = await GeminiService.getStatus();
     return {
       configured: status.configured,
       preferredModel: status.modelCandidates[0] || "gemini-2.0-flash",
