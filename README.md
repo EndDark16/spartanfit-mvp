@@ -1,3 +1,11 @@
+<!-- technical-overview: EndDark16/spartanfit-mvp -->
+
+**Introduccion tecnica**
+
+Aplicacion full-stack de fitness construida con Next.js App Router, React y TypeScript. Prisma y PostgreSQL gestionan los datos, Supabase aporta autenticacion, y las Server Actions y servicios organizan la logica de negocio; el chat admite integracion con Gemini y respuesta local alternativa.
+
+---
+
 # Proyecto SpartanFit MVP
 
 Este archivo define el contexto global del proyecto.
